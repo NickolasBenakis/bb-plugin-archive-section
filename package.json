@@ -42,5 +42,9 @@
     "type": "git",
     "url": "git+https://github.com/NickolasBenakis/bb-plugin-archive-section.git"
   },
-  "homepage": "https://github.com/NickolasBenakis/bb-plugin-archive-section"
+  "homepage": "https://github.com/NickolasBenakis/bb-plugin-archive-section",
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://buymeacoffee.com/nikosbenakis"
+  }
 }

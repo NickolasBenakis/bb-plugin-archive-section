@@ -1,5 +1,7 @@
 # Archive Section for BB
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/nikosbenakis)
+
 Moves a BB thread into an **Archived** sidebar section the moment you archive
 it, and puts it back in its old section when you unarchive it.
 
@@ -54,6 +56,10 @@ bb archive-section sweep [--json]    # move every archived thread into the secti
 ```sh
 npm run check   # typecheck + bb plugin build
 ```
+
+## Support
+
+If this plugin saves you time, you can [buy me a coffee](https://buymeacoffee.com/nikosbenakis).
 
 ## License
 
