@@ -1,0 +1,46 @@
+{
+  "name": "bb-plugin-archive-section",
+  "version": "0.1.0",
+  "description": "Moves every thread you archive into an Archived sidebar section, and back out when you unarchive it.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "bb": ">=0.47",
+    "bbPluginSdk": ">=0.6.79"
+  },
+  "bb": {
+    "name": "Archive Section",
+    "description": "Moves a thread into your Archived sidebar section the moment you archive it, and restores its old section when you unarchive it.",
+    "branding": {
+      "icon": "Archive"
+    },
+    "server": "./server.ts"
+  },
+  "files": [
+    "dist/",
+    "skills/",
+    "server.ts",
+    "README.md",
+    "PLUGIN_OVERVIEW.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "env -u BB_CLI bb plugin build .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build"
+  },
+  "devDependencies": {
+    "@get-bb/plugin-sdk": "0.6.79",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "hono": "^4.13.13",
+    "typescript": "^5.7.0"
+  },
+  "author": "Nikos Benakis",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NickolasBenakis/bb-plugin-archive-section.git"
+  },
+  "homepage": "https://github.com/NickolasBenakis/bb-plugin-archive-section"
+}
