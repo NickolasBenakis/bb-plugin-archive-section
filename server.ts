@@ -6,10 +6,16 @@
 // plugin is unloaded are not replayed, so a startup sweep catches those up.
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
 
-type Thread = { id: string; sectionId: string | null; title: string | null };
+type Thread = {
+  id: string;
+  sectionId: string | null;
+  pinnedAt: number | null;
+  archivedAt: number | null;
+  title: string | null;
+};
 type Section = { id: string; name: string };
-/** What a thread's section was before this plugin moved it. */
-type Previous = { sectionId: string | null };
+/** What a thread's section and pin were before this plugin moved it. */
+type Previous = { sectionId: string | null; pinned?: boolean };
 
 const PAGE_SIZE = 200;
 
@@ -69,24 +75,50 @@ export default async function plugin(bb: BbPluginApi) {
 
   const previousKey = (threadId: string) => `previous:${threadId}`;
 
+  /**
+   * Unpins the thread and moves it into the section. A pinned thread shows in
+   * the Pinned group whatever its section, so it has to be unpinned too.
+   */
   async function moveToArchive(thread: Thread, section: Section): Promise<boolean> {
-    if (thread.sectionId === section.id) return false;
-    const previous: Previous = { sectionId: thread.sectionId };
-    await bb.storage.kv.set(previousKey(thread.id), previous);
-    await bb.sdk.threads.update({ threadId: thread.id, sectionId: section.id });
-    bb.log.info(`moved archived thread ${thread.id} into ${section.id}`);
+    const inSection = thread.sectionId === section.id;
+    const pinned = thread.pinnedAt !== null;
+    if (inSection && !pinned) return false;
+    const key = previousKey(thread.id);
+    // A record from an earlier, possibly half-finished move still knows the
+    // pin; keep it so a retry or sweep does not forget the thread was pinned.
+    const stored = await bb.storage.kv.get<Previous>(key);
+    const previous: Previous = {
+      sectionId: inSection ? (stored?.sectionId ?? null) : thread.sectionId,
+      pinned: pinned || stored?.pinned === true,
+    };
+    await bb.storage.kv.set(key, previous);
+    if (pinned) await bb.sdk.threads.unpin({ threadId: thread.id });
+    if (!inSection) await bb.sdk.threads.update({ threadId: thread.id, sectionId: section.id });
+    bb.log.info(
+      `moved archived thread ${thread.id} into ${section.id}${pinned ? " and unpinned it" : ""}`,
+    );
     return true;
   }
 
-  async function restore(thread: Thread): Promise<void> {
-    const key = previousKey(thread.id);
+  /** The event payload predates queued moves, so act on the current thread. */
+  async function current(thread: Thread): Promise<Thread> {
+    return (await bb.sdk.threads.get({ threadId: thread.id })) as Thread;
+  }
+
+  async function restore(event: Thread): Promise<void> {
+    const key = previousKey(event.id);
     const previous = await bb.storage.kv.get<Previous>(key);
     await bb.storage.kv.delete(key);
     if (!restoreOnUnarchive) return;
+    const thread = await current(event);
     const sections = await listSections();
     const archive = await findSection(sections);
     // Leave the thread alone if the user already moved it somewhere else.
     if (archive === null || thread.sectionId !== archive.id) return;
+    if (previous?.pinned === true && thread.pinnedAt === null) {
+      await bb.sdk.threads.pin({ threadId: thread.id });
+      bb.log.info(`re-pinned unarchived thread ${thread.id}`);
+    }
     const target = previous?.sectionId ?? null;
     const stillExists = target !== null && sections.some((s) => s.id === target);
     await bb.sdk.threads.update({
@@ -96,7 +128,7 @@ export default async function plugin(bb: BbPluginApi) {
     bb.log.info(`restored unarchived thread ${thread.id} to ${stillExists ? target : "no section"}`);
   }
 
-  /** Moves every archived thread that is outside the archive section. */
+  /** Moves every archived thread that is outside the archive section or pinned. */
   async function sweep(): Promise<{ sectionName: string; moved: Thread[] }> {
     const section = await archiveSection();
     const moved: Thread[] = [];
@@ -119,7 +151,10 @@ export default async function plugin(bb: BbPluginApi) {
 
   bb.events.on("thread.archived", ({ thread }) =>
     serialize(async () => {
-      await moveToArchive(thread, await archiveSection());
+      const latest = await current(thread);
+      // Unarchived again before this ran: the unarchive handler owns it now.
+      if (latest.archivedAt === null) return;
+      await moveToArchive(latest, await archiveSection());
     }),
   );
   bb.events.on("thread.unarchived", ({ thread }) => serialize(() => restore(thread)));
@@ -144,12 +179,12 @@ export default async function plugin(bb: BbPluginApi) {
     commands: [
       {
         name: "status",
-        summary: "Show the archive section and how many archived threads are outside it",
+        summary: "Show the archive section and how many archived threads are outside it or pinned",
         usage: "bb archive-section status [--json]",
       },
       {
         name: "sweep",
-        summary: "Move every archived thread that is outside the section into it",
+        summary: "Move every archived thread outside the section (or pinned) into it, unpinned",
         usage: "bb archive-section sweep [--json]",
       },
     ],
@@ -172,7 +207,7 @@ export default async function plugin(bb: BbPluginApi) {
               limit: PAGE_SIZE,
               offset,
             });
-            outside += page.filter((t) => t.sectionId !== section?.id).length;
+            outside += page.filter((t) => t.sectionId !== section?.id || t.pinnedAt !== null).length;
             if (page.length < PAGE_SIZE) break;
           }
           const value = {
@@ -186,7 +221,7 @@ export default async function plugin(bb: BbPluginApi) {
               ? `Section: none matches "${wanted}" yet (created on the next archive)`
               : `Section: ${section.name} (${section.id})`,
             `Restore on unarchive: ${restoreOnUnarchive ? "on" : "off"}`,
-            `Archived threads outside the section: ${outside}`,
+            `Archived threads outside the section or pinned: ${outside}`,
           ].join("\n");
           return { exitCode: 0, stdout: json ? JSON.stringify(value) : text };
         }

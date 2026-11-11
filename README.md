@@ -20,12 +20,16 @@ bb plugin install .
 
 ## Behavior
 
-- **Archive**: the thread moves into the archive section. Cascade archives move
-  every child too. The thread's previous section is remembered.
-- **Unarchive**: the thread returns to its previous section (or to no section).
+- **Archive**: the thread moves into the archive section. A pinned thread is
+  unpinned first, since the Pinned group would otherwise keep showing it.
+  Cascade archives move every child too. The thread's previous section and pin
+  are remembered.
+- **Unarchive**: the thread returns to its previous section (or to no section),
+  and is pinned again if it was pinned before.
   If you moved it out of the archive section yourself while it was archived,
   the plugin leaves it where it is.
-- **Startup**: every archived thread outside the section is swept in, which
+- **Startup**: every archived thread outside the section, or still pinned, is
+  swept in, which
   catches anything archived while the plugin was not loaded.
 
 The section is matched by name, ignoring emoji, spacing, and case, so the
@@ -37,7 +41,7 @@ the next archive.
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `sectionName` | `Archived` | Section that receives archived threads |
-| `restoreOnUnarchive` | `true` | Return unarchived threads to their previous section |
+| `restoreOnUnarchive` | `true` | Return unarchived threads to their previous section and pin |
 
 ```sh
 bb plugin config archive-section set sectionName "Old work"
@@ -54,7 +58,7 @@ bb archive-section sweep [--json]    # move every archived thread into the secti
 ## Development
 
 ```sh
-npm run check   # typecheck + bb plugin build
+npm run check   # typecheck + tests + bb plugin build
 ```
 
 ## Support
