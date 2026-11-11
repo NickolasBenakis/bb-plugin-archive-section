@@ -1,7 +1,7 @@
 {
   "name": "bb-plugin-archive-section",
-  "version": "0.1.0",
-  "description": "Moves every thread you archive into an Archived sidebar section, and back out when you unarchive it.",
+  "version": "0.2.0",
+  "description": "Moves every thread you archive into an Archived sidebar section (unpinning it if needed), and back out when you unarchive it.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -27,7 +27,8 @@
   "scripts": {
     "build": "env -u BB_CLI bb plugin build .",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run build"
+    "test": "node --test server.test.ts",
+    "check": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "@get-bb/plugin-sdk": "0.6.79",

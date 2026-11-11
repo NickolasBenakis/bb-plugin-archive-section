@@ -1,9 +1,10 @@
 ## What you get
 
-- Archive a thread and it moves into your Archived section right away. A parent
+- Archive a thread and it moves into your Archived section right away, even if
+  it was pinned: the plugin unpins it so it leaves the Pinned group. A parent
   archived with its children takes the children along, each one moved.
-- Unarchive it and it goes back to the section it came from. A thread that had
-  no section leaves the Archived section.
+- Unarchive it and it goes back to the section it came from, pinned again if it
+  was pinned. A thread that had no section leaves the Archived section.
 - Threads archived before you installed the plugin, or while it was turned off,
   are moved in when the plugin loads.
 - A `bb archive-section` command shows the matched section and moves any
@@ -22,9 +23,10 @@ time you archive a thread.
 - **Archive section name**: which section receives archived threads. Default
   "Archived".
 - **Restore section on unarchive**: turn off to leave unarchived threads in the
-  Archived section.
+  Archived section and unpinned.
 
 ## Requirements
 
 Nothing beyond BB. The plugin needs no account or external service, and it
-stores only each archived thread's previous section, on your BB server.
+stores only each archived thread's previous section and pin state, on your BB
+server.

@@ -6,20 +6,22 @@ description: Explain or check the Archive Section plugin, which moves archived B
 # Archive Section
 
 The plugin moves a thread into the archive section as soon as it is archived,
-including children archived with their parent. When the thread is unarchived,
-it goes back to the section it was in before, or out of every section if it had
-none. A thread the user moved out of the archive section while archived is left
+including children archived with their parent. A pinned thread is unpinned as
+well, because the Pinned group shows pinned threads regardless of section. When
+the thread is unarchived, it goes back to the section it was in before, or out
+of every section if it had none, and is pinned again if it was pinned. A thread the user moved out of the archive section while archived is left
 alone on unarchive.
 
-On load, the plugin sweeps every archived thread into the section, which
+On load, the plugin sweeps every archived thread into the section and unpins
+any that are still pinned, which
 catches threads archived while the plugin was disabled.
 
 ## Commands
 
 | Command | Effect |
 | --- | --- |
-| `bb archive-section status` | Show the matched section, the restore setting, and how many archived threads are outside the section. |
-| `bb archive-section sweep` | Move every archived thread outside the section into it. |
+| `bb archive-section status` | Show the matched section, the restore setting, and how many archived threads are outside the section or still pinned. |
+| `bb archive-section sweep` | Move every archived thread outside the section into it, unpinning pinned ones. |
 
 Both accept `--json`.
 
@@ -33,4 +35,4 @@ then `bb plugin reload archive-section`; settings are read once per load.
   `🗑️ Archived`. If no section matches, the plugin creates one with this name
   the next time a thread is archived.
 - `restoreOnUnarchive` (default `true`): move unarchived threads back to their
-  previous section.
+  previous section and re-pin the ones that were pinned.
